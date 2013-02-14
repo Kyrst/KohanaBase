@@ -22,6 +22,7 @@
 				Base
 				<?php echo HTML::anchor('/', 'Home', array('class' => 'btn btn-small')); ?>
 				<?php echo HTML::anchor('/about', 'About', array('class' => 'btn btn-small')); ?>
+				<?php echo HTML::anchor('/user', 'User', array('class' => 'btn btn-small')); ?>
 			</div>
 			<div id="content">
 				<?php echo $content; ?>
@@ -30,7 +31,11 @@
 		<?php if ( count($js_vars) > 0 ): ?>
 			<script>
 				<?php foreach ( $js_vars as $name => $value ): ?>
-					var <?php echo $name, ' = ', (is_string($value) ? '\'' . $value . '\'' : (is_bool($value) ? ($value ? 'true' : 'false') : $value)), ';'; ?>
+					<?php if ( is_array($value) ): ?>
+						var <?php echo $name, ' = ', json_encode($value); ?>;
+					<?php else: ?>
+						var <?php echo $name, ' = ', (is_string($value) ? '\'' . $value . '\'' : (is_bool($value) ? ($value ? 'true' : 'false') : $value)), ';'; ?>
+					<?php endif; ?>
 				<?php endforeach; ?>
 			</script>
 		<?php endif; ?>

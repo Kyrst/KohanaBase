@@ -13,4 +13,3 @@ class Common {
 		return trim($str);
 	}
 }
-?>

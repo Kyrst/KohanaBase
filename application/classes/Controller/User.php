@@ -5,21 +5,28 @@ class Controller_User extends Controller_Base {
 	public function before() {
 		parent::before();
 
-		if ( !$this->user ) {
-			HTTP::redirect('/');
+		if ( !$this->user && $this->request->action() !== 'login' ) {
+			HTTP::redirect('/user/login');
 		}
 	}
 	
-	public function action_radio_shows()
+	public function action_login()
 	{
-		$view = View::factory('User/Radio_Shows');
-		
-		// Radio shows
-		$radio_show_model = new Model_RadioShow();
-		$view->radio_shows = $radio_show_model->get_all();
-		
-		$this->setPageTitle('Radio Shows');
-		
+		if ( $form_data = $this->request->post() )
+		{
+			if ( Auth::instance()->login($form_data['username'], $form_data['password']) )
+			{
+			}
+			else
+			{
+				$this->showMessagePopup('Could not log in', 'Could not log in, please try again.');
+
+				$this->redirect('user/login');
+			}
+		}
+
+		$view = View::factory('User/Login');
+
 		$this->display(
 			$view
 		);

@@ -43,8 +43,11 @@ abstract class Controller_Base extends Controller_Template {
 	// JS variables
 	private $js_vars = array();
 
+	// Session
+	protected $session;
+
 	// User
-	protected $user = NULL;
+	protected $user;
 
 	// Initialize
 	public function before()
@@ -71,8 +74,19 @@ abstract class Controller_Base extends Controller_Template {
 		$this->addJSVar('BASE_URL', URL::base());
 		$this->addJSVar('DEBUG', Kohana::$environment === Kohana::DEVELOPMENT);
 
+		// Initialize session
+		$this->session = Session::instance();
+
 		// Initialize user
 		$this->user = Auth::instance()->logged_in() ? Auth::instance()->get_user() : NULL;
+
+		// Check for message popup
+		if ( ($message_popup = $this->session->get('message_popup')) )
+		{
+			$this->addJSVar('message_popup', $message_popup);
+
+			$this->session->delete('message_popup');
+		}
 
 		if ( $this->auto_render )
 		{
@@ -104,8 +118,8 @@ abstract class Controller_Base extends Controller_Template {
 		
 		parent::after();
 	}
-	
-	public function display(View $view)
+
+	protected function display(View $view)
 	{
 		$this->template->page_title = $this->page_title;
 		$this->template->meta_description = $this->meta_description;
@@ -115,44 +129,44 @@ abstract class Controller_Base extends Controller_Template {
 	}
 
 	// Set page title
-	public function setPageTitle($page_title, $include_suffix = true)
+	protected function setPageTitle($page_title, $include_suffix = true)
 	{
 		$this->page_title = $page_title . ($include_suffix ? ' ' . PAGE_TITLE_SEPARATOR . ' ' . PAGE_TITLE_SUFFIX : '');
 	}
 
 	// Set meta description
-	public function setMetaDescription($meta_description) {
+	protected function setMetaDescription($meta_description) {
 		$this->meta_description = $meta_description;
 	}
 
 	// Add single CSS file
-	public function addCSS($path)
+	protected function addCSS($path)
 	{
 		$this->css_files[] = $path;
 	}
 
 	// Add single JS file
-	public function addJS($path)
+	protected function addJS($path)
 	{
 		$this->js_files[] = $path;
 	}
 
 	// Automatically load CSS file from Controller and Action name
-	public function scanCSS()
+	protected function scanCSS()
 	{
 		if ( file_exists(DOCROOT . CSS_DIR . $this->request->controller() . '/' . $this->request->action() . '.css') )
 			$this->css_files[] = '/' . CSS_DIR . $this->request->controller() . '/' . $this->request->action() . '.css';
 	}
 
 	// Automatically load JS file from Controller and Action name
-	public function scanJS()
+	protected function scanJS()
 	{
 		if ( file_exists(DOCROOT . JS_DIR . $this->request->controller() . '/' . $this->request->action() . '.js') )
 			$this->js_files[] = '/' . JS_DIR . $this->request->controller() . '/' . $this->request->action() . '.js';
 	}
 
 	// Load external library
-	public function loadLib($name) {
+	protected function loadLib($name) {
 		if ( !isset($this->libs[$name]) )
 			return;
 
@@ -166,17 +180,27 @@ abstract class Controller_Base extends Controller_Template {
 	}
 
 	// Add JS variable
-	public function addJSVar($name, $value)
+	protected function addJSVar($name, $value)
 	{
 		$this->js_vars[$name] = $value;
 	}
 
 	// Set content of a block
-	public function setBlock($block, $content)
+	protected function setBlock($block, $content)
 	{
 		if ( !isset($this->blocks[$block]) )
 			return;
 
 		$this->blocks[$block] = $content;
+	}
+
+	protected function showMessagePopup($title, $message)
+	{
+		$this->session->set('message_popup',
+			array(
+				'title' => $title,
+				'message' => $message
+			)
+		);
 	}
 }

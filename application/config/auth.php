@@ -8,4 +8,3 @@ return array(
     'lifetime' => 1209600,
     'session_key' => 'auth_user'
 );
-?>
