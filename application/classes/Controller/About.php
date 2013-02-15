@@ -9,8 +9,6 @@ class Controller_About extends Controller_Base {
 		$this->setPageTitle('About');
 		$this->setMetaDescription('About.');
 
-		$this->loadLib('jquery-ui');
-
 		$this->display(
 			$view
 		);

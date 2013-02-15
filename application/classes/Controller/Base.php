@@ -49,6 +49,9 @@ abstract class Controller_Base extends Controller_Template {
 	// User
 	protected $user;
 
+	// What page
+	private $current_page;
+
 	// Initialize
 	public function before()
 	{
@@ -57,6 +60,7 @@ abstract class Controller_Base extends Controller_Template {
 		// External libraries that we always want to load
 		$this->loadLib('jquery');
 		$this->loadLib('bootstrap');
+		$this->loadLib('jquery-ui');
 
 		// CSS library files that we always want to load
 		$this->lib_css_files[] = '/' . CSS_DIR . 'normalize.css';
@@ -114,8 +118,10 @@ abstract class Controller_Base extends Controller_Template {
 			$this->template->js_vars = $this->js_vars;
 
 			$this->template->user = $this->user;
+
+			$this->template->current_page = $this->getCurrentPage();
 		}
-		
+
 		parent::after();
 	}
 
@@ -129,14 +135,14 @@ abstract class Controller_Base extends Controller_Template {
 	}
 
 	// Set page title
-	protected function setPageTitle($page_title, $include_suffix = true)
+	protected function setPageTitle($page_title, $include_suffix = TRUE)
 	{
 		$this->page_title = $page_title . ($include_suffix ? ' ' . PAGE_TITLE_SEPARATOR . ' ' . PAGE_TITLE_SUFFIX : '');
 	}
 
 	// Set meta description
 	protected function setMetaDescription($meta_description) {
-		$this->meta_description = $meta_description;
+		$this->meta_description = str_replace(array("\r\n", "\n", "\r"), ' ', $meta_description);
 	}
 
 	// Add single CSS file
@@ -194,13 +200,23 @@ abstract class Controller_Base extends Controller_Template {
 		$this->blocks[$block] = $content;
 	}
 
-	protected function showMessagePopup($title, $message)
+	// Show message popup when on page load
+	protected function showMessagePopup($title, $message, $buttons = '')
 	{
-		$this->session->set('message_popup',
-			array(
-				'title' => $title,
-				'message' => $message
-			)
+		$message_popup = array(
+			'title' => $title,
+			'message' => $message
 		);
+
+		if ( $buttons !== '' )
+			$message_popup['buttons'] = $buttons;
+
+		$this->session->set('message_popup', $message_popup);
+	}
+
+	// Check what page it is...
+	protected function getCurrentPage()
+	{
+		return strtolower($this->request->controller());
 	}
 }

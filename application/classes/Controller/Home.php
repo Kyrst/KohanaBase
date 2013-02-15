@@ -8,7 +8,7 @@ class Controller_Home extends Controller_Base {
 
 		$this->setPageTitle('Base', FALSE);
 		$this->setMetaDescription('Base.');
-		
+
 		$this->display(
 			$view
 		);

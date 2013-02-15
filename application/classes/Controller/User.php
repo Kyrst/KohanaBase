@@ -9,7 +9,7 @@ class Controller_User extends Controller_Base {
 			HTTP::redirect('/user/login');
 		}
 	}
-	
+
 	public function action_login()
 	{
 		if ( $form_data = $this->request->post() )
@@ -19,7 +19,12 @@ class Controller_User extends Controller_Base {
 			}
 			else
 			{
-				$this->showMessagePopup('Could not log in', 'Could not log in, please try again.');
+				// Show error dialog
+				$this->showMessagePopup(
+					'Could not log in',
+					'Could not log in, please try again.',
+					"[ { text: 'OK', click: function() { $(this).dialog('close') } } ]"
+				);
 
 				$this->redirect('user/login');
 			}

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<title><?php echo $page_title; ?></title>
-		<meta name="description" content="<?php echo $meta_description; ?>">
+		<?php if ($meta_description !== ''): ?><meta name="description" content="<?php echo $meta_description; ?>"><?php endif; ?>
 		<?php foreach ( $lib_css_files as $css_file ): ?>
 			<link href="<?php echo $css_file; ?>" rel="stylesheet">
 		<?php endforeach; ?>
@@ -18,12 +18,15 @@
 	</head>
 	<body>
 		<div id="container">
-			<div id="header">
-				Base
-				<?php echo HTML::anchor('/', 'Home', array('class' => 'btn btn-small')); ?>
-				<?php echo HTML::anchor('/about', 'About', array('class' => 'btn btn-small')); ?>
-				<?php echo HTML::anchor('/user', 'User', array('class' => 'btn btn-small')); ?>
-			</div>
+			<header id="header" class="clearfix">
+				<a href="<?php echo URL::base(); ?>" id="logo">Base</a>
+				<nav id="nav">
+					<?php echo HTML::anchor('/', 'Home', array('class' => 'btn btn-small' . ($current_page === 'home' ? ' btn-primary' : ''))); ?>
+					<?php echo HTML::anchor('/about', 'About', array('class' => 'btn btn-small' . ($current_page === 'about' ? ' btn-primary' : ''))); ?>
+					<?php echo HTML::anchor('/user', 'User', array('class' => 'btn btn-small' . ($current_page === 'user' ? ' btn-primary' : ''))); ?>
+					<a href="javascript:" id="help_button" class="btn btn-small">Help</a>
+				</nav>
+			</header>
 			<div id="content">
 				<?php echo $content; ?>
 			</div>
@@ -50,6 +53,7 @@
 			<script src="<?php echo URL::site(); ?>helper/combine_js?<?php foreach ( $js_files as $i => $js_file ): ?>f[]=<?php echo $js_file, ($i < ($num_js_files - 1) ? '&amp;' : ''); ?><?php endforeach; ?>"></script>
 		<?php endif; ?>*/
 		?>
+		<div id="dialog"></div>
 		<?php echo $blocks['bottom']; ?>
 	</body>
 </html>
