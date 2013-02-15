@@ -28,7 +28,9 @@
 				</nav>
 			</header>
 			<div id="content">
-				<?php echo $content; ?>
+				<div class="inner">
+					<?php echo $content; ?>
+				</div>
 			</div>
 		</div>
 		<?php if ( count($js_vars) > 0 ): ?>

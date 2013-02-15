@@ -1,7 +1,7 @@
 body {
 	font-family:Arial;
 	margin:25px 30px;
-	background-color:#EEE;
+	background-color:#EBEBEB;
 	color:#222;
 }
 
@@ -27,14 +27,16 @@ body {
 }
 
 #content {
-	padding:60px;
 	margin-bottom:30px;
 	line-height:30px;
 	color:inherit;
 	background-color:#FFF;
 	border-radius:6px;
-	-webkit-border-radius:6px;
-	-moz-border-radius:6px;
+	box-shadow:3px 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+#content .inner {
+	padding:60px;
 }
 
 #content h1 {
