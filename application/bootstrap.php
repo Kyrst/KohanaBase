@@ -130,12 +130,12 @@ Route::set('default', '(<controller>(/<action>(/<id>)))')
 		'controller' => 'home',
 		'action'     => 'index',
 	));
-	
-Route::set('imagefly', 'imagefly/<image>/<width>/<height>', array('image' => '[-09a-zA-Z_\.]+', 'width' => '[0-9]+', 'height' => '[0-9]+'))
-    ->defaults(array(
-        'controller' => 'imagefly',
-        'action' => 'index'
-    ));
+
+Route::set('ajax', '<directory>/<controller>(/<action>(/<id>))', array('directory' => 'ajax'))
+	->defaults(array(
+		'controller' => 'home',
+		'action'     => 'index',
+	));
 
 // Page title
 define('DEFAULT_PAGE_TITLE', 'Base');

@@ -95,8 +95,27 @@ Base.prototype =
 			$('.ui-widget-overlay').on('click', function() { inst.$dialog.dialog('close'); });
 	},
 
-	showConfirmDialog: function(title, message, yes_button, no_button, cancel_button)
+	get: function(url, data, callback)
 	{
+		this.ajax('GET', url, data, callback);
+	},
+
+	post: function(url, data, callback)
+	{
+		this.ajax('POST', url, data, callback);
+	},
+
+	ajax: function(type, url, data, callback)
+	{
+		console.log('AJAX request:\nType: ' + type + '\nURL: ' + url);
+
+		$.ajax({
+			url: url,
+			data: data,
+			type: type
+		}).done(function(result) {
+			callback(result);
+		});
 	}
 };
 

@@ -1,7 +1,8 @@
 <?php
 defined('SYSPATH') or die('No direct script access.');
 
-abstract class Controller_Base extends Controller_Template {
+abstract class Controller_Base extends Controller_Template
+{
 	// Base template
 	public $template = 'Layout/Base';
 	
