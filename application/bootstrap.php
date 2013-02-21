@@ -148,3 +148,4 @@ define('DEFAULT_META_DESCRIPTION', '');
 // Dir
 define('CSS_DIR', 'assets/css/');
 define('JS_DIR', 'assets/js/');
+define('LIBS_DIR', 'assets/libs/');

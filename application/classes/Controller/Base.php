@@ -74,6 +74,7 @@ abstract class Controller_Base extends Controller_Template
 		// ...
 
 		// JS files that we always want to load
+		$this->js_files[] = '/' . LIBS_DIR . 'phpjs/print_r.js';
 		$this->js_files[] = '/' . JS_DIR . 'base.js';
 
 		$this->addJSVar('BASE_URL', URL::base());

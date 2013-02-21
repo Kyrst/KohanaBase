@@ -107,13 +107,20 @@ Base.prototype =
 
 	ajax: function(type, url, data, callback)
 	{
-		console.log('AJAX request:\nType: ' + type + '\nURL: ' + url);
+		console.log('AJAX Request:\nType: ' + type + '\nURL: ' + url + '\nData:\n' + print_r(data, true));
 
 		$.ajax({
 			url: url,
 			data: data,
-			type: type
+			type: type,
+			error: function(jqXHR, textStatus, errorThrown)
+			{
+				if (errorThrown === 'Not Found')
+					console.log('Error: Could not find URL');
+			}
 		}).done(function(result) {
+			console.log(callback);
+
 			callback(result);
 		});
 	}
