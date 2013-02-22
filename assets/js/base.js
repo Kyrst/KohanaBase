@@ -107,7 +107,8 @@ Base.prototype =
 
 	ajax: function(type, url, data, callback)
 	{
-		console.log('AJAX Request:\nType: ' + type + '\nURL: ' + url + '\nData:\n' + print_r(data, true));
+		console.log('\n########################\n#  AJAX Request START  #\n########################\n');
+		console.log('Type: ' + type + '\nURL: ' + url + '\nData:\n' + print_r(data, true));
 
 		$.ajax({
 			url: url,
@@ -119,9 +120,11 @@ Base.prototype =
 					console.log('Error: Could not find URL');
 			}
 		}).done(function(result) {
-			console.log(callback);
+			//console.log(callback);
 
-			callback(result);
+			//callback(result);
+		}).always(function() {
+			console.log('\n#######################\n#  AJAX Request END  #\n#######################\n');
 		});
 	}
 };
