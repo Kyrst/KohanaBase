@@ -1,4 +1,4 @@
-# Base
+# KohanaBase
 
 Startup project for Kohana 3.3.
 
