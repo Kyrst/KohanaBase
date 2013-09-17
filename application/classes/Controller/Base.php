@@ -3,222 +3,302 @@ defined('SYSPATH') or die('No direct script access.');
 
 abstract class Controller_Base extends Controller_Template
 {
-	// Base template
-	public $template = 'Layout/Base';
-	
-	private $page_title = DEFAULT_PAGE_TITLE;
-	private $meta_description = DEFAULT_META_DESCRIPTION;
+	const DEFAULT_PAGE_TITLE = 'Resolve.co';
+	const PAGE_TITLE_APPENDIX = 'Resolve.co';
+	const PAGE_TITLE_SEPARATOR = '-';
 
-	// Blocks
-	private $blocks = array(
-		'bottom' => ''
+	const AJAX_OK = 1;
+	const AJAX_FAIL = 2;
+
+	public $template = 'layouts/main';
+
+	private $data = array
+	(
+		'layout' => array(),
+		'content' => array(),
+		'js' => array()
 	);
 
-	// Autoloaded CSS & JS files
-	private $autoloaded_css_files = array();
-	private $autoloaded_js_files = array();
-
-	// Library CSS & JS files
-	private $lib_css_files = array();
-	private $lib_js_files = array();
-
-	// External libraries
-	private $libs = array(
-		'jquery' => array(
-			'js' => array('/assets/js/jquery.js')
-		),
-		'jquery-ui' => array(
-			'js' => array('/assets/libs/jquery-ui/js/jquery-ui-1.10.0.custom.min.js'),
-			'css' => array('/assets/libs/jquery-ui/css/smoothness/jquery-ui-1.10.0.custom.min.css')
-		),
-		'bootstrap' => array(
-			'css' => array('/assets/libs/bootstrap/css/bootstrap.min.css'),
-			'js' => array('/assets/libs/bootstrap/js/bootstrap.min.js')
-		)
+	private $assets = array
+	(
+		'css' => array(),
+		'js' => array()
 	);
 
-	// CSS & JS files
-	private $css_files = array();
-	private $js_files = array();
+	private $libs = array();
 
-	// JS variables
-	private $js_vars = array();
+	private $loaded_libs = array
+	(
+		'pre_loaded' => array
+		(
+			'bootstrap',
+			'bootbox',
+			'underscore'
+		),
+		'user_loaded' => array()
+	);
 
-	// Session
-	protected $session;
+	protected $is_ajax = FALSE;
 
-	// User
+	private $session;
+
 	protected $user;
 
-	// What page
-	private $current_page;
+	private $start_time;
+
+	private function setup_libs()
+	{
+		$this->libs['underscore'] = array
+		(
+			'js' => REL_LIBS_DIR . 'underscore/underscore.js'
+		);
+
+		$this->libs['bootstrap'] = array
+		(
+			'css' => REL_LIBS_DIR . 'bootstrap/bootstrap.css',
+			'js' => REL_LIBS_DIR . 'bootstrap/bootstrap.js'
+		);
+
+		$this->libs['bootbox'] = array
+		(
+			'js' => REL_LIBS_DIR . 'bootbox/bootbox.js'
+		);
+	}
 
 	// Initialize
 	public function before()
 	{
 		parent::before();
 
-		// External libraries that we always want to load
-		$this->loadLib('jquery');
-		$this->loadLib('bootstrap');
-		$this->loadLib('jquery-ui');
+		$this->start_time = microtime(TRUE);
 
-		// CSS library files that we always want to load
-		$this->lib_css_files[] = '/' . CSS_DIR . 'normalize.css';
-		$this->lib_css_files[] = '/' . CSS_DIR . 'base.css';
+		$this->is_ajax = $this->request->is_ajax();
 
-		// JS library files that we always want to load
-		// ...
-
-		// CSS files that we always want to load
-		// ...
-
-		// JS files that we always want to load
-		$this->js_files[] = '/' . LIBS_DIR . 'phpjs/print_r.js';
-		$this->js_files[] = '/' . JS_DIR . 'base.js';
-
-		$this->addJSVar('BASE_URL', URL::base());
-		$this->addJSVar('DEBUG', Kohana::$environment === Kohana::DEVELOPMENT);
-
-		// Initialize session
 		$this->session = Session::instance();
 
-		// Initialize user
 		$this->user = Auth::instance()->logged_in() ? Auth::instance()->get_user() : NULL;
 
-		// Check for message popup
-		if ( ($message_popup = $this->session->get('message_popup')) )
-		{
-			$this->addJSVar('message_popup', $message_popup);
+		$this->setup_libs();
 
-			$this->session->delete('message_popup');
+		$this->assign('BASE_URL', BASE_URL, array('js'));
+		$this->assign('DEBUG', DEBUG, array('layout', 'content', 'js'));
+
+		$this->assign('AJAX_OK', self::AJAX_OK, array('js'));
+		$this->assign('AJAX_FAIL', self::AJAX_FAIL, array('js'));
+
+		$this->assign('user', $this->user, array('layout', 'content'));
+
+		// Alert
+		if ( ($alert = $this->session->get('alert_popup')) )
+		{
+			$this->assign('alert_popup', json_encode($alert), array('js'));
+
+			$this->session->delete('alert_popup');
 		}
 
-		if ( $this->auto_render )
-		{
-			// Automatically load CSS & JS file from Controller and Action name
-			$this->scanCSS();
-			$this->scanJS();
-
-			// Show profiler if requested
-			if ( $this->request->query('profiler') ) {
-				$this->blocks['bottom'] = View::factory('profiler/stats');
-			}
-		}
+		// Profiler
+		$this->assign('show_profiler', $this->request->query('profiler', NULL, FILTER_VALIDATE_INT) ? TRUE : FALSE, array('layout'));
 	}
-	
+
 	public function after()
 	{
-		if ( $this->auto_render )
+		parent::after();
+
+		if ( DEBUG )
 		{
-			$this->template->lib_css_files = $this->lib_css_files;
-			$this->template->css_files = array_merge($this->autoloaded_css_files, $this->css_files);
+			$execution_time = microtime(TRUE) - $this->start_time;
 
-			$this->template->lib_js_files = $this->lib_js_files;
-			$this->template->js_files = array_merge($this->autoloaded_js_files, $this->js_files);
+			error_log($this->request->controller() . '/' . $this->request->action() . ($this->is_ajax ? ' (AJAX)' : '') . "\t\t" . number_format($execution_time, 4));
+		}
+	}
 
-			$this->template->js_vars = $this->js_vars;
+	// Assign variable to template/JS
+	protected function assign($key, $value, $section = 'content')
+	{
+		if ( is_array($section) )
+		{
+			$types = (array)$section;
 
-			$this->template->user = $this->user;
+			foreach ( $types as $section )
+			{
+				if ( isset($this->data[$section][$key]) )
+					throw new Exception('Var "' . $key . '" already assiged.');
 
-			$this->template->current_page = $this->getCurrentPage();
+				if ( $section === 'js' )
+				{
+					if ( is_bool($value) )
+						$value = $value ? 'true' : 'false';
+				}
+
+				$this->data[$section][$key] = $value;
+			}
+		}
+		else
+		{
+			if ( isset($this->data[$section][$key]) )
+				throw new Exception('Var "' . $key . '" already assiged.');
+
+			if ( $section === 'js' )
+				if ( is_bool($value) )
+					$value = $value ? 'true' : 'false';
+
+			$this->data[$section][$key] = $value;
+		}
+	}
+
+	// Include CSS file
+	public function add_css($css_file)
+	{
+		if ( in_array($css_file, $this->assets['css']) )
+			throw new Exception('Stylesheet file "' . $css_file . '" already added.');
+
+		$this->assets['css'][] = $css_file;
+	}
+
+	// Include JS file
+	public function add_js($js_file)
+	{
+		if ( in_array($js_file, $this->assets['js']) )
+			throw new Exception('JavaScript file "' . $js_file . '" already added.');
+		elseif ( !file_exists(DOCROOT . $js_file) )
+			throw new Exception('JavaScript file "' . $js_file . '" does not exist.');
+
+		$this->assets['js'][] = $js_file;
+	}
+
+	// Load library
+	public function load_lib($lib_name, $pre_loaded = FALSE)
+	{
+		if ( !isset($this->libs[$lib_name]) )
+			throw new Exception('Library "' . $lib_name . '" does not exist.');
+
+		$this->loaded_libs[$pre_loaded ? 'pre_loaded' : 'user_loaded'][] = $lib_name;
+	}
+
+	// Display page
+	public function display($file, $page_title = '', $page_title_appendix = TRUE)
+	{
+		// Set page title
+		$this->template->page_title = ($page_title !== '') ? $page_title . ($page_title_appendix ? ' ' . self::PAGE_TITLE_SEPARATOR . ' ' . self::PAGE_TITLE_APPENDIX : '') : self::DEFAULT_PAGE_TITLE;
+
+		// Pre-loaded libs
+		foreach ( $this->loaded_libs['pre_loaded'] as $lib_name )
+		{
+			$lib = $this->libs[$lib_name];
+
+			if ( isset($lib['css']) )
+				if ( is_array($lib['css']) )
+					foreach ( $lib['css'] as $css_file )
+						$this->add_css($css_file);
+				else
+					$this->add_css($lib['css']);
+
+			if ( isset($lib['js']) )
+				if ( is_array($lib['js']) )
+					foreach ( $lib['js'] as $js_file )
+						$this->add_js($js_file);
+				else
+					$this->add_js($lib['js']);
 		}
 
-		parent::after();
+		// Include base.js
+		$this->add_js(REL_JS_DIR . 'base.js');
+
+		// User-loaded libs
+		foreach ( $this->loaded_libs['user_loaded'] as $lib_name )
+		{
+			$lib = $this->libs[$lib_name];
+
+			if ( isset($lib['css']) )
+				if ( is_array($lib['css']) )
+					foreach ( $lib['css'] as $css_file )
+						$this->add_css($css_file);
+				else
+					$this->add_css($lib['css']);
+
+			if ( isset($lib['js']) )
+				if ( is_array($lib['js']) )
+					foreach ( $lib['js'] as $js_file )
+						$this->add_js($js_file);
+				else
+					$this->add_js($lib['js']);
+		}
+
+		// Include CSS & JS based off template
+		$template_basename = basename($this->template->getFile(), '.php');
+
+		if ( file_exists(ABS_CSS_DIR . 'layouts/' . $template_basename . '.css') )
+			$this->add_css(REL_CSS_DIR . 'layouts/' . $template_basename . '.css');
+
+		if ( file_exists(ABS_JS_DIR . 'layouts/' . $template_basename . '.js') )
+			$this->add_js(REL_JS_DIR . 'layouts/' . $template_basename . '.js');
+
+		// Include CSS & JS based off route
+		$controller = strtolower($this->request->controller());
+
+		if ( file_exists(ABS_CSS_DIR . $controller . '/' . $this->request->action() . '.css') )
+			$this->add_css(REL_CSS_DIR . $controller . '/' . $this->request->action() . '.css');
+
+		if ( file_exists(ABS_JS_DIR . $controller . '/' . $this->request->action() . '.js') )
+			$this->add_js(REL_JS_DIR . $controller . '/' . $this->request->action() . '.js');
+
+		// Attach CSS & JS to template
+		$this->template->assets = $this->assets;
+
+		// Attach layout variables to template
+		foreach ( $this->data['layout'] as $key => $value )
+			$this->template->$key = $value;
+
+		// Attach JS variables to template
+		$this->template->js_vars = $this->data['js'];
+
+		// Attach jQuery to template
+		$this->template->jquery = View::factory('layouts/partials/jquery_script');
+
+		// Attach content to template
+		$this->template->content = View::factory($file)->render();
 	}
 
-	protected function display(View $view)
+	// Initialize AJAX
+	public function init_ajax()
 	{
-		$this->template->page_title = $this->page_title;
-		$this->template->meta_description = $this->meta_description;
-		
-		$this->template->content = $view;
-		$this->template->blocks = $this->blocks;
+		$this->auto_render = FALSE;
+
+		if ( !$this->is_ajax && !DEBUG )
+			return FALSE;
+
+		return TRUE;
 	}
 
-	// Set page title
-	protected function setPageTitle($page_title, $include_suffix = TRUE)
+	// Return AJAX response
+	public function ajax_result($return_code, $data)
 	{
-		$this->page_title = $page_title . ($include_suffix ? ' ' . PAGE_TITLE_SEPARATOR . ' ' . PAGE_TITLE_SUFFIX : '');
+		if ( is_array($data) )
+		{
+			$this->response->headers('Content-Type', 'application/json');
+			$this->response->body(
+				json_encode(
+					array
+					(
+						'return_code' => $return_code,
+						'data' => $data
+					)
+				)
+			);
+		}
+		else
+		{
+			$this->response->body($data);
+		}
 	}
 
-	// Set meta description
-	protected function setMetaDescription($meta_description) {
-		$this->meta_description = str_replace(array("\r\n", "\n", "\r"), ' ', $meta_description);
-	}
-
-	// Add single CSS file
-	protected function addCSS($path)
+	// Show alert
+	public function show_alert($title, $message)
 	{
-		$this->css_files[] = $path;
-	}
-
-	// Add single JS file
-	protected function addJS($path)
-	{
-		$this->js_files[] = $path;
-	}
-
-	// Automatically load CSS file from Controller and Action name
-	protected function scanCSS()
-	{
-		if ( file_exists(DOCROOT . CSS_DIR . $this->request->controller() . '/' . $this->request->action() . '.css') )
-			$this->css_files[] = '/' . CSS_DIR . $this->request->controller() . '/' . $this->request->action() . '.css';
-	}
-
-	// Automatically load JS file from Controller and Action name
-	protected function scanJS()
-	{
-		if ( file_exists(DOCROOT . JS_DIR . $this->request->controller() . '/' . $this->request->action() . '.js') )
-			$this->js_files[] = '/' . JS_DIR . $this->request->controller() . '/' . $this->request->action() . '.js';
-	}
-
-	// Load external library
-	protected function loadLib($name) {
-		if ( !isset($this->libs[$name]) )
-			return;
-
-		$lib = $this->libs[$name];
-
-		if ( isset($lib['css']) )
-			$this->lib_css_files = array_merge($this->lib_css_files, $lib['css']);
-
-		if ( isset($lib['js']) )
-			$this->lib_js_files = array_merge($this->lib_js_files, $lib['js']);
-	}
-
-	// Add JS variable
-	protected function addJSVar($name, $value)
-	{
-		$this->js_vars[$name] = $value;
-	}
-
-	// Set content of a block
-	protected function setBlock($block, $content)
-	{
-		if ( !isset($this->blocks[$block]) )
-			return;
-
-		$this->blocks[$block] = $content;
-	}
-
-	// Show message popup when on page load
-	protected function showMessagePopup($title, $message, $buttons = '')
-	{
-		$message_popup = array(
+		$this->session->set('alert_popup', array
+		(
 			'title' => $title,
 			'message' => $message
-		);
-
-		if ( $buttons !== '' )
-			$message_popup['buttons'] = $buttons;
-
-		$this->session->set('message_popup', $message_popup);
-	}
-
-	// Check what page it is...
-	protected function getCurrentPage()
-	{
-		return strtolower($this->request->controller());
+		));
 	}
 }

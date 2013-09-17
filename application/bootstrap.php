@@ -22,7 +22,7 @@ else
  * @link http://kohanaframework.org/guide/using.configuration
  * @link http://www.php.net/manual/timezones
  */
-date_default_timezone_set('America/Los_Angeles');
+date_default_timezone_set('America/Chicago');
 
 /**
  * Set the default locale.
@@ -56,6 +56,13 @@ spl_autoload_register(array('Kohana', 'auto_load'));
  */
 ini_set('unserialize_callback_func', 'spl_autoload_call');
 
+/**
+ * Set the mb_substitute_character to "none"
+ *
+ * @link http://www.php.net/manual/function.mb-substitute-character.php
+ */
+mb_substitute_character('none');
+
 // -- Configuration and initialization -----------------------------------------
 
 /**
@@ -63,7 +70,11 @@ ini_set('unserialize_callback_func', 'spl_autoload_call');
  */
 I18n::lang('en-us');
 
-Cookie::$salt = 'Base';
+if (isset($_SERVER['SERVER_PROTOCOL']))
+{
+	// Replace the default protocol.
+	HTTP::$protocol = $_SERVER['SERVER_PROTOCOL'];
+}
 
 /**
  * Set Kohana::$environment if a 'KOHANA_ENV' environment variable has been supplied.
@@ -91,7 +102,8 @@ if (isset($_SERVER['KOHANA_ENV']))
  * - boolean  caching     enable or disable internal caching                 FALSE
  * - boolean  expose      set the X-Powered-By header                        FALSE
  */
-Kohana::init(array(
+Kohana::init(array
+(
 	'base_url' => '/',
 	'index_file' => FALSE
 ));
@@ -109,43 +121,45 @@ Kohana::$config->attach(new Config_File);
 /**
  * Enable modules. Modules are referenced by a relative or absolute path.
  */
-Kohana::modules(array(
-	'auth'       => MODPATH.'auth',       // Basic authentication
-	'cache'      => MODPATH.'cache',      // Caching with multiple backends
-	'codebench'  => MODPATH.'codebench',  // Benchmarking tool
-	'database'   => MODPATH.'database',   // Database access
-	//'image'      => MODPATH.'image',      // Image manipulation
-	// 'minion'     => MODPATH.'minion',     // CLI Tasks
-	'orm'        => MODPATH.'orm',        // Object Relationship Mapping
-	// 'unittest'   => MODPATH.'unittest',   // Unit testing
-	// 'userguide'  => MODPATH.'userguide',  // User guide and API documentation
-	));
+Kohana::modules
+(
+	array
+	(
+		'auth' => MODPATH . 'auth',
+		'cache' => MODPATH . 'cache',
+		'orm' => MODPATH . 'orm'
+	)
+);
 
 /**
  * Set the routes. Each route must have a minimum of a name, a URI and a set of
  * defaults for the URI.
  */
 Route::set('default', '(<controller>(/<action>(/<id>)))')
-	->defaults(array(
-		'controller' => 'home',
-		'action'     => 'index',
-	));
+	->defaults
+	(
+		array
+		(
+			'controller' => 'Welcome',
+			'action' => 'index'
+		)
+	);
 
-Route::set('ajax', '<directory>/<controller>(/<action>(/<id>))', array('directory' => 'ajax'))
-	->defaults(array(
-		'controller' => 'home',
-		'action'     => 'index',
-	));
+Cookie::$salt = '#FK*FteSVype';
 
-// Page title
-define('DEFAULT_PAGE_TITLE', 'Base');
-define('PAGE_TITLE_SEPARATOR', '-');
-define('PAGE_TITLE_SUFFIX', 'Base');
+define('DEBUG', Kohana::$environment === Kohana::DEVELOPMENT);
 
-// Meta description
+define('BASE_URL', URL::base());
+
+// Default meta description
 define('DEFAULT_META_DESCRIPTION', '');
 
-// Dir
-define('CSS_DIR', 'assets/css/');
-define('JS_DIR', 'assets/js/');
-define('LIBS_DIR', 'assets/libs/');
+// Paths
+define('REL_CSS_DIR', 'assets/css/');
+define('ABS_CSS_DIR', DOCROOT . 'assets/css/');
+
+define('REL_JS_DIR', 'assets/js/');
+define('ABS_JS_DIR', DOCROOT . 'assets/js/');
+
+define('REL_LIBS_DIR', 'assets/libs/');
+define('ABS_LIBS_DIR', DOCROOT . 'assets/libs/');
